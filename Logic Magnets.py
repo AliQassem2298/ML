@@ -7,6 +7,7 @@ class MagneticPuzzleBoard:
         self.board = [['.' for _ in range(cols)] for _ in range(rows)]
         self.targets = []
 
+
     def is_within_bounds(self, row, col):
         return 0 <= row < self.rows and 0 <= col < self.cols
 
