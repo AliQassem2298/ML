@@ -59,9 +59,12 @@ class MagneticPuzzleBoard:
 
     def move_piece(self, row, col, direction):
         piece = self.board[row][col]
-        if piece not in ['P', 'R', 'H']:
+        if piece not in ['P', 'R']:  # تأكد من أن القطعة التي يتم تحريكها هي مغناطيس فقط
             return False
+        
         if self.can_move(row, col, direction):
+            # انسخ الحالة الحالية
+            new_board = self.clone_board()
             new_row, new_col = row, col
             if direction == "up":
                 new_row -= 1
@@ -72,31 +75,19 @@ class MagneticPuzzleBoard:
             elif direction == "right":
                 new_col += 1
 
-        #     if self.board[new_row][new_col] == 'T' or self.board[new_row][new_col] == '.':
-        #         self.board[row][col] = '.'
-        #         self.board[new_row][new_col] = piece
-        #         self.pieces.remove((piece, (row, col)))  # إزالة القطعة من مكانها السابق
-        #         self.pieces.append((piece, (new_row, new_col)))  # إضافة القطعة في مكانها الجديد
-
-        #         # تطبيق القوة المغناطيسية (جذب أو تنافر)
-        #         if piece == 'P':
-        #             self.apply_repulsion(new_row, new_col)
-        #         elif piece == 'R':
-        #             self.apply_attraction(new_row, new_col)
-        #         self.check_win()
-        #         return True
-        # return False
-
             # تحديث اللوحة
-            new_board = self.clone_board()  # يجب أن يكون لديك دالة clone_board لنسخ اللوحة
-            new_board.board[row][col] = '.'  # إزالة القطعة من مكانها الحالي
-            new_board.board[new_row][new_col] = piece  # وضع القطعة في المكان الجديد
-
-            # تحديث القطع في الـ pieces
+            new_board.board[row][col] = '.'
+            new_board.board[new_row][new_col] = piece
             new_board.pieces.remove((piece, (row, col)))
             new_board.pieces.append((piece, (new_row, new_col)))
 
-            return new_board  # إرجاع نسخة جديدة من الحالة
+            # تطبيق القوة المغناطيسية بعد حركة المغناطيس
+            if piece == 'P':
+                new_board.apply_repulsion(new_row, new_col)
+            elif piece == 'R':
+                new_board.apply_attraction(new_row, new_col)
+
+            return new_board
         return False
 
     def clone_board(self):
@@ -237,22 +228,21 @@ def bfs(start_board):
 def generate_possible_moves(current_state):
     moves = []
     for piece, (row, col) in current_state.pieces:
-        directions = ["up", "down", "left", "right"]
-        for direction in directions:
-            if current_state.can_move(row, col, direction):
-                moves.append((row, col, direction))
+        if piece in ['P', 'R']: 
+            directions = ["up", "down", "left", "right"]
+            for direction in directions:
+                if current_state.can_move(row, col, direction):
+                    moves.append((row, col, direction))
     return moves
 
 
 
-# ### the first level from the game hahahah
-board = MagneticPuzzleBoard(1,4)
-board.place_target(0, 3)
-board.place_target(0, 1)
-board.place_piece(0, 2, 'H')
-board.place_piece(0, 0, 'P')
-print('Initial Board :')
-board.display()
+board = MagneticPuzzleBoard(3,4)
+board.place_target(1, 3)
+board.place_target(1, 1)
+board.place_piece(1, 2, 'H')
+board.place_piece(2, 0, 'P')
+
 
 start_time = time. time()
 solution = bfs(board)
@@ -264,9 +254,20 @@ print(f"Execution time: {execution_time} seconds")
 
 
 
+# ### the first level from the game hahahah
+# board = MagneticPuzzleBoard(1,4)
+# board.place_target(0, 3)
+# board.place_target(0, 1)
+# board.place_piece(0, 2, 'H')
+# board.place_piece(0, 0, 'P')
 
-# board.move_magnet_to_position(2, 0, 1, 1)
-# board.display()
+# start_time = time. time()
+# solution = bfs(board)
+
+# end_time = time. time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
+
 
 ##############################################
 
