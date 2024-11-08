@@ -224,6 +224,37 @@ def bfs(start_board):
     print("No solution found!")
     return None
 
+def dfs(start_board):
+    visited_states = set()
+    stack = [start_board]  # نستخدم المكدس بدلاً من الطابور
+
+    while stack:
+        current_state = stack.pop()  # استخراج الحالة من المكدس
+
+        # إذا كانت هذه الحالة قد تم زيارتها سابقًا، نتجاهلها
+        if current_state.state_as_tuple() in visited_states:
+            continue
+
+        visited_states.add(current_state.state_as_tuple())
+
+        print("Current state:")
+        current_state.display()
+        print(f"Visited states count: {len(visited_states)}")
+        
+        # تحقق من الفوز
+        if current_state.check_win():
+            print("You Win!")
+            return current_state
+
+        # إضافة الحركات الممكنة إلى المكدس
+        for move in generate_possible_moves(current_state):
+            new_state = current_state.move_piece(*move)
+
+            if new_state and new_state.state_as_tuple() not in visited_states:
+                stack.append(new_state)  # إضافة الحالة الجديدة إلى المكدس
+
+    print("No solution found!")
+    return None
     
 def generate_possible_moves(current_state):
     moves = []
@@ -251,7 +282,13 @@ end_time = time. time()
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds")
 
+print("#################################################################################")
 
+start_time = time. time()
+solution = dfs(board)
+end_time = time. time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
 
 
 # ### the first level from the game hahahah
