@@ -1,29 +1,32 @@
 import random
-
+from collections import deque
+import time
 class MagneticPuzzleBoard:
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
         self.board = [['.' for _ in range(cols)] for _ in range(rows)]
         self.targets = []
-
+        self.pieces = []  # قائمة لتخزين القطع كـ tuples (type, (row, col))
+        self.visited_states = set()  # مجموعة لتخزين الحالات المٌزارة
 
     def is_within_bounds(self, row, col):
         return 0 <= row < self.rows and 0 <= col < self.cols
 
     def is_empty_or_target(self, row, col):
-        return self.board[row][col] in [".", "T"]
+        return self.board[row][col] in ['.', 'T']
 
     def place_piece(self, row, col, piece_type):
         if 0 <= row < self.rows and 0 <= col < self.cols:
             self.board[row][col] = piece_type
+            self.pieces.append((piece_type, (row, col)))  # إضافة القطعة إلى قائمة القطع
         else:
             print(f"Position ({row}, {col}) is out of bounds.")
 
     def place_target(self, row, col):
         if 0 <= row < self.rows and 0 <= col < self.cols:
             self.board[row][col] = 'T'
-            self.targets.append((row, col))
+            self.targets.append((row, col))  # إضافة الهدف إلى قائمة الأهداف
         else:
             print(f"Target position ({row}, {col}) is out of bounds.")
 
@@ -37,6 +40,7 @@ class MagneticPuzzleBoard:
                     display_row.append(self.board[row][col])
             print(" ".join(display_row))
         print()
+
 
     def can_move(self, row, col, direction):
         new_row, new_col = row, col
@@ -68,16 +72,39 @@ class MagneticPuzzleBoard:
             elif direction == "right":
                 new_col += 1
 
-            if self.board[new_row][new_col] == 'T' or self.board[new_row][new_col] == '.':
-                self.board[row][col] = '.'
-                self.board[new_row][new_col] = piece
-                if piece == 'P':
-                    self.apply_repulsion(new_row, new_col)
-                elif piece == 'R':
-                    self.apply_attraction(new_row, new_col)
-                self.check_win()
-                return True
+        #     if self.board[new_row][new_col] == 'T' or self.board[new_row][new_col] == '.':
+        #         self.board[row][col] = '.'
+        #         self.board[new_row][new_col] = piece
+        #         self.pieces.remove((piece, (row, col)))  # إزالة القطعة من مكانها السابق
+        #         self.pieces.append((piece, (new_row, new_col)))  # إضافة القطعة في مكانها الجديد
+
+        #         # تطبيق القوة المغناطيسية (جذب أو تنافر)
+        #         if piece == 'P':
+        #             self.apply_repulsion(new_row, new_col)
+        #         elif piece == 'R':
+        #             self.apply_attraction(new_row, new_col)
+        #         self.check_win()
+        #         return True
+        # return False
+
+            # تحديث اللوحة
+            new_board = self.clone_board()  # يجب أن يكون لديك دالة clone_board لنسخ اللوحة
+            new_board.board[row][col] = '.'  # إزالة القطعة من مكانها الحالي
+            new_board.board[new_row][new_col] = piece  # وضع القطعة في المكان الجديد
+
+            # تحديث القطع في الـ pieces
+            new_board.pieces.remove((piece, (row, col)))
+            new_board.pieces.append((piece, (new_row, new_col)))
+
+            return new_board  # إرجاع نسخة جديدة من الحالة
         return False
+
+    def clone_board(self):
+        new_board = MagneticPuzzleBoard(self.rows, self.cols)
+        new_board.board = [row[:] for row in self.board]  # نسخ اللوحة
+        new_board.pieces = self.pieces[:]  # نسخ قائمة القطع
+        new_board.targets = self.targets[:]  # نسخ الأهداف
+        return new_board
 
     def apply_repulsion(self, row, col):
         for r in range(self.rows):
@@ -145,80 +172,136 @@ class MagneticPuzzleBoard:
                     self.place_piece(row, col, 'B')
                     barrier_count -= 1
 
-    def move_randomly(self, max_moves=20):
-        moves = 0
-        while moves < max_moves:
-            row = random.randint(0, self.rows - 1)
-            col = random.randint(0, self.cols - 1)
-            piece = self.board[row][col]
-            if piece in ['P', 'R', 'H']:
-                direction = random.choice(['up', 'down', 'left', 'right'])
-                if self.move_piece(row, col, direction):
-                    self.display()
-                    moves += 1
     def move_magnet_to_position(self, row, col, new_row, new_col):
-
         if self.is_within_bounds(new_row, new_col) and self.is_empty_or_target(new_row, new_col):
             magnet = self.board[row][col]
-
             self.board[row][col] = "."  
             self.board[new_row][new_col] = magnet  
             
-            if magnet == "P": 
+            self.pieces.remove((magnet, (row, col)))  # إزالة القطعة من مكانها السابق
+            self.pieces.append((magnet, (new_row, new_col)))  # إضافة القطعة في مكانها الجديد
+
+            if magnet == "P":
                 self.apply_repulsion(new_row, new_col)
-            elif magnet == "R": 
+            elif magnet == "R":
                 self.apply_attraction(new_row, new_col)
         else:
             print(f"Invalid move. Target ({new_row}, {new_col}) is not an empty or target square.")
 
-
-    def test_moves(self):
-        directions = ["up", "down", "left", "right"]
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.board[row][col] in ['R', 'P', 'H']:
-                    for direction in directions:
-                        if self.can_move(row, col, direction):
-                            print(f"Piece {self.board[row][col]} at ({row}, {col}) can move {direction}.")
-
     def check_win(self):
         for target in self.targets:
             row, col = target
-            if self.board[row][col] not in ['H', 'R', 'P']:
+            if self.board[row][col] == 'T':  # هدف فارغ
                 return False
         return True
 
 
+    def state_as_tuple(self):
+        # إنشاء الحالة كـ tuple مكون من النوع والموقع لكل قطعة
+        return tuple(sorted([(piece_type, (row, col)) for piece_type, (row, col) in self.pieces]))
+
+
+def bfs(start_board):
+    visited_states = set()
+    queue = deque([start_board])
+
+    while queue:
+        current_state = queue.popleft()
+
+        if current_state.state_as_tuple() in visited_states:
+            continue
+
+        visited_states.add(current_state.state_as_tuple())
+        
+        print("Current state:")
+        current_state.display()
+        print(f"Visited states count: {len(visited_states)}")
+        
+        # تحقق من الفوز
+        if current_state.check_win():
+            print("You Win!")
+            return current_state
+
+        for move in generate_possible_moves(current_state):
+            new_state = current_state.move_piece(*move)
+
+            if new_state and new_state.state_as_tuple() not in visited_states:
+                queue.append(new_state)
+
+       
+                
+    print("No solution found!")
+    return None
+
+    
+def generate_possible_moves(current_state):
+    moves = []
+    for piece, (row, col) in current_state.pieces:
+        directions = ["up", "down", "left", "right"]
+        for direction in directions:
+            if current_state.can_move(row, col, direction):
+                moves.append((row, col, direction))
+    return moves
+
+
+
 # ### the first level from the game hahahah
-# board = MagneticPuzzleBoard(3,4)
-# board.place_target(1, 3)
-# board.place_target(1, 1)
-# board.place_piece(1, 2, 'H')
-# board.place_piece(2, 0, 'P')
-# board.display()
+board = MagneticPuzzleBoard(1,4)
+board.place_target(0, 3)
+board.place_target(0, 1)
+board.place_piece(0, 2, 'H')
+board.place_piece(0, 0, 'P')
+print('Initial Board :')
+board.display()
+
+start_time = time. time()
+solution = bfs(board)
+
+end_time = time. time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
+
+
+
+
+
 # board.move_magnet_to_position(2, 0, 1, 1)
 # board.display()
 
 ##############################################
 
-# ## test the attraction & repulsion over the B
-board = MagneticPuzzleBoard(5, 5)
-board.place_piece(0, 3, 'P')    
-board.place_piece(0, 2, 'H')
-board.place_piece(1, 2, 'H')
-board.place_piece(1, 1, 'H')
-board.place_piece(2, 3, 'B')
-board.place_piece(4, 2, 'R')
-print('initial board:')
-board.display()
-board.move_piece(4, 2, "right")
-print('moving the R to the right:')
-board.display()
-board.move_piece(1, 3, "right")
-print('moving the P to the right:')
-board.display()
+## test the attraction & repulsion over the B
+# board = MagneticPuzzleBoard(5, 5)
+# board.place_piece(0, 3, 'P')    
+# board.place_piece(0, 2, 'H')
+# board.place_piece(1, 2, 'H')
+# board.place_piece(1, 1, 'H')
+# board.place_piece(2, 3, 'B')
+# board.place_piece(4, 2, 'R')
+# board.place_target(0, 0)
+
+# board.place_target(4, 4)
+# board.place_target(4, 0)
+
+# board.place_target(1, 1)
+# print('initial board:')
+# board.display()
+# board.move_piece(4, 2, "right")
+# print('moving the R to the right:')
+# board.display()
+# board.move_piece(1, 3, "right")
+# print('moving the P to the right:')
+# board.display()
+
+# start_time = time. time()
+# solution = bfs(board)
+
+# end_time = time. time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
 
 ##############################################
+
 ### testing if the move_magnet_to_position is running...
 # board = MagneticPuzzleBoard(5,5)
 # board.place_piece(0, 3, 'P')    
@@ -229,6 +312,7 @@ board.display()
 # board.place_piece(4, 2, 'R')
 # board.display()
 # board.move_piece(4, 2, "right")
+# board.display()
 # board.move_magnet_to_position(4, 3, 0, 0)
 # board.display()
 
@@ -238,7 +322,7 @@ board.display()
 ##############################################
 
 ##testing the H over the T
-#don't try this at home 🙂.
+### don't try this at home 🙂.
 ### not working but there is no time to modify the code.
 # board = MagneticPuzzleBoard(5,5)
 # board.place_target(0, 0)
