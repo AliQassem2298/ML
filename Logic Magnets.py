@@ -100,23 +100,91 @@ class MagneticPuzzleBoard:
         new_board.targets = self.targets[:]  
         return new_board
         
+    # def apply_repulsion(self, row, col):
+    #     for r in range(self.rows):
+    #         if r != row and self.board[r][col] in ['H', 'P', 'R']:
+    #             self.repulse_piece(r, col, "up" if r < row else "down")
+
+    #     for c in range(self.cols):
+    #         if c != col and self.board[row][c] in ['H', 'P', 'R']:
+    #             self.repulse_piece(row, c, "left" if c < col else "right")
+
+    # def apply_attraction(self, row, col):
+    #     for r in range(self.rows):
+    #         if r != row and self.board[r][col] in ['H', 'P', 'R']:
+    #             self.attract_piece_toward(r, col, "down" if r < row else "up")
+
+    #     for c in range(self.cols):
+    #         if c != col and self.board[row][c] in ['H', 'P', 'R']:
+    #             self.attract_piece_toward(row, c, "right" if c < col else "left")
+    # دالة التنافر المعدلة لتحريك القطعة بمقدار مربع واحد فقط
     def apply_repulsion(self, row, col):
-        for r in range(self.rows):
-            if r != row and self.board[r][col] in ['H', 'P', 'R']:
-                self.repulse_piece(r, col, "up" if r < row else "down")
+        for r in range(row - 1, -1, -1):
+            if self.board[r][col] in ['H', 'P', 'R']:
+                self.repulse_piece(r, col, "up")
+                break
+            if self.board[r][col] == 'B':
+                break
 
-        for c in range(self.cols):
-            if c != col and self.board[row][c] in ['H', 'P', 'R']:
-                self.repulse_piece(row, c, "left" if c < col else "right")
+        for r in range(row + 1, self.rows):
+            if self.board[r][col] in ['H', 'P', 'R']:
+                self.repulse_piece(r, col, "down")
+                break
+            if self.board[r][col] == 'B':
+                break
 
+        for c in range(col - 1, -1, -1):
+            if self.board[row][c] in ['H', 'P', 'R']:
+                self.repulse_piece(row, c, "left")
+                break
+            if self.board[row][c] == 'B':
+                break
+
+        for c in range(col + 1, self.cols):
+            if self.board[row][c] in ['H', 'P', 'R']:
+                self.repulse_piece(row, c, "right")
+                break
+            if self.board[row][c] == 'B':
+                break
+
+    # دالة الجذب المعدلة لتحريك القطعة بمقدار مربع واحد فقط
     def apply_attraction(self, row, col):
-        for r in range(self.rows):
-            if r != row and self.board[r][col] in ['H', 'P', 'R']:
-                self.attract_piece_toward(r, col, "down" if r < row else "up")
+        attracted_pieces = []
+        for r in range(row - 1, -1, -1):
+            if self.board[r][col] in ['H', 'P', 'R']:
+                attracted_pieces.append((r, col))
+            elif self.board[r][col] == 'B':
+                break
+        for r, c in attracted_pieces:
+            self.attract_piece_toward(r, c, row, col)
 
-        for c in range(self.cols):
-            if c != col and self.board[row][c] in ['H', 'P', 'R']:
-                self.attract_piece_toward(row, c, "right" if c < col else "left")
+        attracted_pieces = []
+        for r in range(row + 1, self.rows):
+            if self.board[r][col] in ['H', 'P', 'R']:
+                attracted_pieces.append((r, col))
+            elif self.board[r][col] == 'B':
+                break
+        for r, c in attracted_pieces:
+            self.attract_piece_toward(r, c, row, col)
+
+        attracted_pieces = []
+        for c in range(col - 1, -1, -1):
+            if self.board[row][c] in ['H', 'P', 'R']:
+                attracted_pieces.append((row, c))
+            elif self.board[row][c] == 'B':
+                break
+        for r, c in attracted_pieces:
+            self.attract_piece_toward(r, c, row, col)
+
+        attracted_pieces = []
+        for c in range(col + 1, self.cols):
+            if self.board[row][c] in ['H', 'P', 'R']:
+                attracted_pieces.append((row, c))
+            elif self.board[row][c] == 'B':
+                break
+        for r, c in attracted_pieces:
+            self.attract_piece_toward(r, c, row, col)
+
 
     def repulse_piece(self, r, c, direction):
         if direction == "up" and r > 0:
