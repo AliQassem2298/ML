@@ -1,6 +1,6 @@
 import random
 from collections import deque
-import time
+import time 
 class MagneticPuzzleBoard:
     def __init__(self, rows, cols):
         self.rows = rows
@@ -43,7 +43,7 @@ class MagneticPuzzleBoard:
 
 
     def can_move(self, row, col, direction):
-        new_row, new_col = row, col
+        new_row, new_col = row, col 
         if direction == "up" and row > 0:
             new_row -= 1
         elif direction == "down" and row < self.rows - 1:
@@ -55,7 +55,8 @@ class MagneticPuzzleBoard:
         else:
             return False
 
-        return self.board[new_row][new_col] in ['.', 'T'] or (self.board[new_row][new_col] == 'H' and self.board[row][col] == 'R')
+        return self.board[new_row][new_col] in ['.', 'T'] 
+        # or (self.board[new_row][new_col] == 'H' and self.board[row][col] == 'R')
 
     def move_piece(self, row, col, direction):
         piece = self.board[row][col]
@@ -63,7 +64,6 @@ class MagneticPuzzleBoard:
             return False
         
         if self.can_move(row, col, direction):
-            # انسخ الحالة الحالية
             new_board = self.clone_board()
             new_row, new_col = row, col
             if direction == "up":
@@ -117,7 +117,7 @@ class MagneticPuzzleBoard:
     #     for c in range(self.cols):
     #         if c != col and self.board[row][c] in ['H', 'P', 'R']:
     #             self.attract_piece_toward(row, c, "right" if c < col else "left")
-    # دالة التنافر المعدلة لتحريك القطعة بمقدار مربع واحد فقط
+
     def apply_repulsion(self, row, col):
         for r in range(row - 1, -1, -1):
             if self.board[r][col] in ['H', 'P', 'R']:
@@ -147,7 +147,6 @@ class MagneticPuzzleBoard:
             if self.board[row][c] == 'B':
                 break
 
-    # دالة الجذب المعدلة لتحريك القطعة بمقدار مربع واحد فقط
     def apply_attraction(self, row, col):
         attracted_pieces = []
         for r in range(row - 1, -1, -1):
@@ -329,10 +328,10 @@ def generate_possible_moves(current_state):
     moves = []
     for piece, (row, col) in current_state.pieces:
         if piece in ['P', 'R']: 
-            # the dfs with the sol neahahahah 🌚🥹
-            directions = ["right", "down", "left", "up"]
-            # the dfs not find sol in this.
-            # directions = ["up", "down", "left", "right"]
+            ### the dfs with the sol neahahahah 🌚🥹
+            # directions = ["right", "down", "left", "up"]
+            #### the dfs not find sol in this.
+            directions = ["up", "down", "left", "right"]
             for direction in directions:
                 if current_state.can_move(row, col, direction):
                     moves.append((row, col, direction))
