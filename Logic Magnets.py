@@ -1,6 +1,8 @@
 import random
 from collections import deque
 import time 
+import heapq
+
 class MagneticPuzzleBoard:
     def __init__(self, rows, cols):
         self.rows = rows
@@ -10,6 +12,9 @@ class MagneticPuzzleBoard:
         self.pieces = [] 
         self.visited_states = set()  
 
+    def __lt__(self, other):
+        return str(self.board) < str(other.board)
+        
     def is_within_bounds(self, row, col):
         return 0 <= row < self.rows and 0 <= col < self.cols
 
@@ -58,29 +63,19 @@ class MagneticPuzzleBoard:
         return self.board[new_row][new_col] in ['.', 'T'] 
         # or (self.board[new_row][new_col] == 'H' and self.board[row][col] == 'R')
 
-    def move_piece(self, row, col, direction):
+    def move_piece(self, row, col, new_row, new_col):
         piece = self.board[row][col]
         if piece not in ['P', 'R']: 
             return False
-        
-        if self.can_move(row, col, direction):
-            new_board = self.clone_board()
-            new_row, new_col = row, col
-            if direction == "up":
-                new_row -= 1
-            elif direction == "down":
-                new_row += 1
-            elif direction == "left":
-                new_col -= 1
-            elif direction == "right":
-                new_col += 1
 
-            
+        if self.is_within_bounds(new_row, new_col) and self.is_empty_or_target(new_row, new_col):
+            new_board = self.clone_board()
+
             if (row, col) in self.targets:
                 new_board.board[row][col] = "T"
             else:
                 new_board.board[row][col] = "."
-                
+
             new_board.board[new_row][new_col] = piece
             new_board.pieces.remove((piece, (row, col)))
             new_board.pieces.append((piece, (new_row, new_col)))
@@ -324,19 +319,63 @@ def dfs(start_board):
     print("No solution found!")
     return None
     
+# def generate_possible_moves(current_state):
+#     moves = []
+#     for piece, (row, col) in current_state.pieces:
+#         if piece in ['P', 'R']: 
+#             ### the dfs with the sol neahahahah 🌚🥹
+#             # directions = ["right", "down", "left", "up"]
+#             #### the dfs not find sol in this.
+#             directions = ["up", "down", "left", "right"]
+#             for direction in directions:
+#                 if current_state.can_move(row, col, direction):
+#                     moves.append((row, col, direction))
+#     return moves
+
 def generate_possible_moves(current_state):
     moves = []
     for piece, (row, col) in current_state.pieces:
-        if piece in ['P', 'R']: 
-            ### the dfs with the sol neahahahah 🌚🥹
-            # directions = ["right", "down", "left", "up"]
-            #### the dfs not find sol in this.
-            directions = ["up", "down", "left", "right"]
-            for direction in directions:
-                if current_state.can_move(row, col, direction):
-                    moves.append((row, col, direction))
+        if piece in ['P', 'R']:  
+            for r in range(current_state.rows):
+                for c in range(current_state.cols):
+                    if current_state.is_empty_or_target(r, c):
+                        moves.append((row, col, r, c))  
     return moves
 
+
+def ucs(start_board):
+    priority_queue = []  
+    visited_states = set()  
+
+    heapq.heappush(priority_queue, (0, start_board, []))  
+
+    while priority_queue:
+        cost, current_state, path = heapq.heappop(priority_queue)
+
+        if current_state.state_as_tuple() in visited_states:
+            continue
+
+        visited_states.add(current_state.state_as_tuple())
+
+        print("Current state with cost:", cost)
+        current_state.display()
+
+        if current_state.check_win():
+            print("You Win!")
+            print("Path to solution:", path)
+            return current_state, path
+
+        for move in generate_possible_moves(current_state):
+            new_row, new_col = move[2], move[3]
+            new_state = current_state.clone_board()
+            new_state.move_magnet_to_position(move[0], move[1], new_row, new_col)
+
+            if new_state.state_as_tuple() not in visited_states:
+                new_path = path + [move]
+                heapq.heappush(priority_queue, (cost + 1, new_state, new_path)) 
+
+    print("No solution found!")
+    return None, []
 
 board = MagneticPuzzleBoard(3,4)
 board.place_target(1, 3)
@@ -364,6 +403,19 @@ solution = dfs(board)
 end_time = time. time()
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds")
+print("#################################################################################")
+
+start_time = time.time()
+solution, path = ucs(board)
+end_time = time.time()
+
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
+
+if solution:
+    print("Solution path:")
+    for move in path:
+        print(move)
 
 
 # ### the first level from the game hahahah
