@@ -357,7 +357,9 @@ def ucs(start_board):
 
         visited_states.add(current_state.state_as_tuple())
 
-        print("Current state with cost:", cost)
+        current_heuristic = heuristic(current_state)
+
+        print(f"Current state with cost: {cost}, heuristic: {current_heuristic}")
         current_state.display()
 
         if current_state.check_win():
@@ -372,18 +374,19 @@ def ucs(start_board):
 
             if new_state.state_as_tuple() not in visited_states:
                 new_path = path + [move]
-                heapq.heappush(priority_queue, (cost + 1, new_state, new_path)) 
+                new_cost = cost + 1  
+                heapq.heappush(priority_queue, (new_cost, new_state, new_path)) 
 
     print("No solution found!")
     return None, []
-    
+
 def hill_climbing(start_board):
     current_state = start_board
     visited_states = set()
 
     while True:
         current_heuristic = heuristic(current_state)
-        print("Current state with heuristic:", current_heuristic)
+        print(f"Current state with heuristic: {current_heuristic}")
         current_state.display()
 
         if current_state.check_win():
@@ -405,6 +408,8 @@ def hill_climbing(start_board):
         best_neighbor = max(neighbors, key=heuristic)
         best_neighbor_heuristic = heuristic(best_neighbor)
 
+        print(f"Best neighbor heuristic: {best_neighbor_heuristic}, current heuristic: {current_heuristic}")
+
         if best_neighbor_heuristic <= current_heuristic:
             print("Reached a local maximum. Stopping.")
             return current_state
@@ -417,9 +422,56 @@ def heuristic(board):
     score = 0
     for target in board.targets:
         row, col = target
-        if board.board[row][col] in ['R', 'P']:  
+        if board.board[row][col] in ['R', 'P', 'H']:  
             score += 1
     return score
+
+def a_star(start_board):
+    priority_queue = []  
+    visited_states = set()  
+
+    heapq.heappush(priority_queue, (0 + heuristic(start_board), 0, start_board, []))  
+
+    while priority_queue:
+        f_value, cost, current_state, path = heapq.heappop(priority_queue)
+
+        if current_state.state_as_tuple() in visited_states:
+            continue
+
+        visited_states.add(current_state.state_as_tuple())
+
+        current_heuristic = heuristic(current_state)
+
+        print(f"Current state with cost (g): {cost}, heuristic (h): {current_heuristic}, f(n): {f_value}")
+        current_state.display()
+
+        if path:
+            print("Path so far:")
+            for step_num, move in enumerate(path, start=1):
+                print(f"Step {step_num}: Magnet moved from ({move[0]}, {move[1]}) to ({move[2]}, {move[3]})")
+
+        if current_state.check_win():
+            print("You Win!")
+            print("Path to solution:")
+            for step_num, move in enumerate(path, start=1):
+                print(f"Step {step_num}: Magnet moved from ({move[0]}, {move[1]}) to ({move[2]}, {move[3]})")
+            return current_state, path
+
+        for move in generate_possible_moves(current_state):
+            new_row, new_col = move[2], move[3]
+            new_state = current_state.clone_board()
+            new_state.move_magnet_to_position(move[0], move[1], new_row, new_col)
+
+            if new_state.state_as_tuple() not in visited_states:
+                new_path = path + [move]
+                new_cost = cost + 1  
+                f_value = new_cost + heuristic(new_state) 
+
+                heapq.heappush(priority_queue, (f_value, new_cost, new_state, new_path))  
+
+    print("No solution found!")
+    return None, []
+
 
 board = MagneticPuzzleBoard(3,4)
 board.place_target(1, 3)
@@ -432,38 +484,48 @@ board.place_piece(2, 0, 'P')
 
 # board.move_magnet_to_position(1,3,0,0)
 # board.display()
-print('BFS:')
-start_time = time. time()
-solution = bfs(board)
-end_time = time. time()
-execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
-print("#################################################################################")
-print('DFS:')
-start_time = time. time()
-solution = dfs(board)
-end_time = time. time()
-execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
-print("#################################################################################")
-print('UCS:')
+
+# print('BFS:')
+# start_time = time. time()
+# solution = bfs(board)
+# end_time = time. time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
+# print("#################################################################################")
+# print('DFS:')
+# start_time = time. time()
+# solution = dfs(board)
+# end_time = time. time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
+# print("#################################################################################")
+# print('UCS:')
+# start_time = time.time()
+# solution, path = ucs(board)
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
+# if solution:
+#     print("Solution path:")
+#     for move in path:
+#         print(move)
+# print("#################################################################################")
+# print('HILL CLIMBING:')
+# start_time = time.time()
+# solution = hill_climbing(board)
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time: {execution_time} seconds")
+# print("#################################################################################")
+print('A*:')
 start_time = time.time()
-solution, path = ucs(board)
+solution, path = a_star(board)
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds")
-if solution:
-    print("Solution path:")
-    for move in path:
-        print(move)
 print("#################################################################################")
-print('HILL CLIMBING:')
-start_time = time.time()
-solution = hill_climbing(board)
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
-print("#################################################################################")
+
+
 
 # ### the first level from the game hahahah
 # board = MagneticPuzzleBoard(1,4)
