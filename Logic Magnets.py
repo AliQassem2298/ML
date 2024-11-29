@@ -376,6 +376,50 @@ def ucs(start_board):
 
     print("No solution found!")
     return None, []
+    
+def hill_climbing(start_board):
+    current_state = start_board
+    visited_states = set()
+
+    while True:
+        current_heuristic = heuristic(current_state)
+        print("Current state with heuristic:", current_heuristic)
+        current_state.display()
+
+        if current_state.check_win():
+            print("You Win!")
+            return current_state
+
+        neighbors = []
+        for move in generate_possible_moves(current_state):
+            new_state = current_state.clone_board()
+            new_state.move_magnet_to_position(move[0], move[1], move[2], move[3])
+
+            if new_state.state_as_tuple() not in visited_states:
+                neighbors.append(new_state)
+
+        if not neighbors:
+            print("No better neighbors found! Stopping.")
+            return current_state
+
+        best_neighbor = max(neighbors, key=heuristic)
+        best_neighbor_heuristic = heuristic(best_neighbor)
+
+        if best_neighbor_heuristic <= current_heuristic:
+            print("Reached a local maximum. Stopping.")
+            return current_state
+
+        visited_states.add(current_state.state_as_tuple())
+        current_state = best_neighbor
+
+
+def heuristic(board):
+    score = 0
+    for target in board.targets:
+        row, col = target
+        if board.board[row][col] in ['R', 'P']:  
+            score += 1
+    return score
 
 board = MagneticPuzzleBoard(3,4)
 board.place_target(1, 3)
@@ -388,35 +432,38 @@ board.place_piece(2, 0, 'P')
 
 # board.move_magnet_to_position(1,3,0,0)
 # board.display()
-
+print('BFS:')
 start_time = time. time()
 solution = bfs(board)
-
 end_time = time. time()
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds")
-
 print("#################################################################################")
-
+print('DFS:')
 start_time = time. time()
 solution = dfs(board)
 end_time = time. time()
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds")
 print("#################################################################################")
-
+print('UCS:')
 start_time = time.time()
 solution, path = ucs(board)
 end_time = time.time()
-
 execution_time = end_time - start_time
 print(f"Execution time: {execution_time} seconds")
-
 if solution:
     print("Solution path:")
     for move in path:
         print(move)
-
+print("#################################################################################")
+print('HILL CLIMBING:')
+start_time = time.time()
+solution = hill_climbing(board)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
+print("#################################################################################")
 
 # ### the first level from the game hahahah
 # board = MagneticPuzzleBoard(1,4)
@@ -431,7 +478,6 @@ if solution:
 # end_time = time. time()
 # execution_time = end_time - start_time
 # print(f"Execution time: {execution_time} seconds")
-
 
 ##############################################
 
