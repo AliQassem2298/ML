@@ -418,14 +418,6 @@ def hill_climbing(start_board):
         current_state = best_neighbor
 
 
-def heuristic(board):
-    score = 0
-    for target in board.targets:
-        row, col = target
-        if board.board[row][col] in ['R', 'P', 'H']:  
-            score += 1
-    return score
-
 def a_star(start_board):
     priority_queue = []  
     visited_states = set()  
@@ -472,12 +464,21 @@ def a_star(start_board):
     print("No solution found!")
     return None, []
 
+def heuristic(board):
+    score = 0
+    for target in board.targets:
+        row, col = target
+        if board.board[row][col] in ['R', 'P', 'H']:  
+            score += 1
+    return score
+
 
 board = MagneticPuzzleBoard(3,4)
 board.place_target(1, 3)
 board.place_target(1, 1)
 board.place_piece(1, 2, 'H')
 board.place_piece(2, 0, 'P')
+
 # board.display()
 # board.move_magnet_to_position(2,0,1,3)
 # board.display()
